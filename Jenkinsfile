@@ -63,23 +63,40 @@ pipeline {
 
                 stage('Smoke Test') {
                     steps {
-                        withCredentials([
-                            aws(credentialsId: 'aws-creds'),
-                            string(credentialsId: 'aws-session-token', variable: 'AWS_SESSION_TOKEN')
-                        ]) {
+                                        withCredentials([
+                                                aws(credentialsId: 'aws-creds'),
+                                                string(credentialsId: 'aws-session-token', variable: 'AWS_SESSION_TOKEN')
+                                        ]) {
                                         sh '''
                                             set -e
                                             export AWS_DEFAULT_REGION="$AWS_REGION"
                                             aws eks --region "$AWS_REGION" update-kubeconfig --name my-eks-cluster
-                                            echo "Waiting for service external address..."
+                                                    # Ensure the new pod version is available before hitting the Service
+                                                    echo "Waiting for deployment rollout..."
+                                                    kubectl rollout status deployment/sample-app-deployment --timeout=300s
+
+                                                    echo "Waiting for service external address..."
                                             for i in $(seq 1 30); do
                                                 LB=$(kubectl get svc sample-app-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
                                                 if [ -n "$LB" ]; then echo "LB=$LB"; break; fi
                                                 sleep 10
                                             done
                                             test -n "$LB" || { echo "Service did not get an external address in time"; exit 1; }
-                                            echo "Hitting http://$LB/ ..."
-                                            curl -fsS --max-time 20 "http://$LB/" | tee /tmp/app_resp.txt
+                      
+                                                    # Wait for DNS to propagate so the ELB hostname resolves
+                                                    echo "Waiting for DNS to resolve $LB ..."
+                                                    for i in $(seq 1 30); do
+                                                        if getent hosts "$LB" >/dev/null 2>&1; then echo "DNS resolved"; break; fi
+                                                        sleep 5
+                                                    done
+                                                    getent hosts "$LB" >/dev/null 2>&1 || { echo "DNS did not resolve in time"; exit 1; }
+
+                                                    echo "Hitting http://$LB/ ..."
+                                                    # Retry HTTP until the load balancer targets are healthy
+                                                    until curl -fsS --max-time 10 "http://$LB/" -o /tmp/app_resp.txt; do
+                                                        echo "Waiting for service HTTP..."; sleep 5;
+                                                    done
+                                                    cat /tmp/app_resp.txt
                                             grep -q "Hello, World!" /tmp/app_resp.txt
                                         '''
                                 }
