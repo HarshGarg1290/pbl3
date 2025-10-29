@@ -1,0 +1,29 @@
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Build outputs
+sample-java-app/target/
+
+# Java/Maven
+**/target/
+
+# Terraform local cache and state
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+crash.*.log
+
+# Sensitive keys
+*.pem
+id_rsa
+id_rsa.pub
+
+# Node/npm (if any subprojects added later)
+node_modules/
+
+# Misc
+*.log
