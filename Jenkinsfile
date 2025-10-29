@@ -50,11 +50,9 @@ pipeline {
                                             export AWS_DEFAULT_REGION="$AWS_REGION"
                                             aws sts get-caller-identity
                                             aws eks --region "$AWS_REGION" update-kubeconfig --name my-eks-cluster
-                                                                    # Bootstrap manifests on first run if not present
-                                            if ! kubectl get deploy sample-app-deployment >/dev/null 2>&1; then
-                                                kubectl apply -f kubernetes/deployment.yaml
-                                                kubectl apply -f kubernetes/service.yaml
-                                            fi
+                                                                                            # Always apply manifests so spec changes (env/probes/resources) are reconciled
+                                                                                            kubectl apply -f kubernetes/deployment.yaml
+                                                                                            kubectl apply -f kubernetes/service.yaml
                                                                     kubectl set image deployment/sample-app-deployment sample-container=$DOCKER_IMAGE
                                                                     # Propagate build metadata as env vars on the running Deployment
                                                                     kubectl set env deployment/sample-app-deployment APP_BUILD=$BUILD_NUMBER APP_IMAGE=$DOCKER_IMAGE --containers=sample-container
