@@ -38,8 +38,12 @@ pipeline {
         }
 
                 stage('Deploy to Kubernetes') {
-                        steps {
-                                withCredentials([aws(credentialsId: 'aws-creds')]) {
+                    steps {
+                        // Bind AKID/Secret via AWS creds and the STS token via Secret Text
+                        withCredentials([
+                            aws(credentialsId: 'aws-creds'),
+                            string(credentialsId: 'aws-session-token', variable: 'AWS_SESSION_TOKEN')
+                        ]) {
                                         sh '''
                                             set -e
                                             # Ensure region is available to AWS SDK/CLI
@@ -58,8 +62,11 @@ pipeline {
                 }
 
                 stage('Smoke Test') {
-                        steps {
-                                withCredentials([aws(credentialsId: 'aws-creds')]) {
+                    steps {
+                        withCredentials([
+                            aws(credentialsId: 'aws-creds'),
+                            string(credentialsId: 'aws-session-token', variable: 'AWS_SESSION_TOKEN')
+                        ]) {
                                         sh '''
                                             set -e
                                             export AWS_DEFAULT_REGION="$AWS_REGION"
