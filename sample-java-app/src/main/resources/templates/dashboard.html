@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,7 +17,7 @@
   <div class="container py-5">
     <div class="text-center mb-4">
       <h1 class="fw-bold">Sample Java App <span class="accent">on Kubernetes</span></h1>
-      <p class="lead">${message}</p>
+      <p class="lead" th:text="${message}">message</p>
       <p class="mb-0">Try the JSON API: <a href="/api/info">/api/info</a></p>
       <p>Or the CI smoke check at root: <a href="/">/</a></p>
     </div>
@@ -27,8 +27,8 @@
         <div class="card h-100">
           <div class="card-body">
             <h5 class="card-title">Build</h5>
-            <p class="card-text mb-1"><strong>APP_BUILD:</strong> <span class="accent">${appBuild}</span></p>
-            <p class="card-text"><strong>APP_IMAGE:</strong> <span class="accent">${appImage}</span></p>
+            <p class="card-text mb-1"><strong>APP_BUILD:</strong> <span class="accent" th:text="${appBuild}">0</span></p>
+            <p class="card-text"><strong>APP_IMAGE:</strong> <span class="accent" th:text="${appImage}">image</span></p>
           </div>
         </div>
       </div>
@@ -36,9 +36,9 @@
         <div class="card h-100">
           <div class="card-body">
             <h5 class="card-title">Kubernetes</h5>
-            <p class="card-text mb-1"><strong>Pod:</strong> <span class="accent">${pod}</span></p>
-            <p class="card-text mb-1"><strong>Namespace:</strong> <span class="accent">${namespace}</span></p>
-            <p class="card-text"><strong>Node:</strong> <span class="accent">${node}</span></p>
+            <p class="card-text mb-1"><strong>Pod:</strong> <span class="accent" th:text="${pod}">pod</span></p>
+            <p class="card-text mb-1"><strong>Namespace:</strong> <span class="accent" th:text="${namespace}">default</span></p>
+            <p class="card-text"><strong>Node:</strong> <span class="accent" th:text="${node}">node</span></p>
           </div>
         </div>
       </div>
@@ -46,8 +46,8 @@
         <div class="card h-100">
           <div class="card-body">
             <h5 class="card-title">Runtime</h5>
-            <p class="card-text mb-1"><strong>Host:</strong> <span class="accent">${host}</span></p>
-            <p class="card-text"><strong>Time:</strong> <span class="accent">${time}</span></p>
+            <p class="card-text mb-1"><strong>Host:</strong> <span class="accent" th:text="${host}">host</span></p>
+            <p class="card-text"><strong>Time:</strong> <span class="accent" th:text="${time}">time</span></p>
           </div>
         </div>
       </div>
