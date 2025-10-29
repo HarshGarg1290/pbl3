@@ -1,36 +1,57 @@
----
 - name: Configure Jenkins Server
   hosts: jenkins
   become: yes
   tasks:
-    - name: Update apt cache
+    - name: Install prerequisites
       apt:
+        name:
+          - ca-certificates
+          - gnupg
+          - curl
+          - unzip
+          - git
+        state: present
         update_cache: yes
 
-    - name: Install Java
+    - name: Install Java 17 (required by recent Jenkins)
       apt:
-        name: openjdk-8-jdk
+        name: openjdk-17-jdk
         state: present
 
-    - name: Add Jenkins repository key
-      apt_key:
-        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
-        state: present
+    - name: Add Jenkins apt key (signed-by keyring)
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: '0644'
 
-    - name: Add Jenkins repository
-      apt_repository:
-        repo: deb https://pkg.jenkins.io/debian-stable binary/
+    - name: Add Jenkins repository (signed-by)
+      ansible.builtin.apt_repository:
+        repo: 'deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/'
+        filename: 'jenkins'
         state: present
 
     - name: Install Jenkins
       apt:
         name: jenkins
         state: present
+        update_cache: yes
 
-    - name: Install Docker
+    - name: Install Docker engine
       apt:
         name: docker.io
         state: present
+
+    - name: Ensure Docker service is enabled and started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
 
     - name: Install kubectl
       get_url:
@@ -45,14 +66,22 @@
         name: maven
         state: present
 
-    - name: Start and enable Jenkins
+    - name: Install AWS CLI v2
+      block:
+        - name: Download AWS CLI v2
+          get_url:
+            url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+            dest: /tmp/awscliv2.zip
+        - name: Unzip AWS CLI v2
+          unarchive:
+            src: /tmp/awscliv2.zip
+            dest: /tmp/
+            remote_src: yes
+        - name: Install AWS CLI v2
+          command: /tmp/aws/install --update
+
+    - name: Ensure Jenkins is enabled and started
       service:
         name: jenkins
         state: started
         enabled: yes
-
-    - name: Add jenkins user to docker group
-      user:
-        name: jenkins
-        groups: docker
-        append: yes
